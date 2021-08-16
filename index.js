@@ -1,8 +1,12 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const fs = require('fs');
 
 const SITE_PREFIX = 'phpbb_';
 
@@ -28,6 +32,7 @@ const prefix = (strings, ...vars) => {
 
 var schema = buildSchema(`
     type Query {
+        sites: [String]
         migrationReport: [EntityReport]
         sourceReport(software: String! = "phpbb" ): [EntityReport]
         entityConfiguration(contentType: String!): EntityConfiguration
@@ -200,6 +205,28 @@ const getEntityCount = async (connection, contentType) => {
 };
 
 const root = {
+  sites: () => {
+    const files = fs.readdirSync(process.env.SITES_CONFIG_FOLDER);
+    const siteNames = files.reduce((carry, envFile) => {
+      const matchSitename = envFile.match(/\.env\.(?<sitename>[a-z0-9_-]*)/);
+
+      if (matchSitename) {
+        console.log(matchSitename);
+        const fullpath = process.env.SITES_CONFIG_FOLDER + envFile;
+        const contents = fs.readFileSync(fullpath);
+        const vars = dotenv.parse(contents);
+        carry.push(
+          `${matchSitename.groups['sitename'] ?? 'N/A'}: ${
+            vars['MIGRATION_SITENAME']
+          }`,
+        );
+      }
+
+      return carry;
+    }, []);
+
+    return siteNames;
+  },
   migrationReport: async () => {
     const connection = await getConnection();
     const [rows, fields] = await connection.query(
