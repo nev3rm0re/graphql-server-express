@@ -1,0 +1,50 @@
+scalar JSON
+
+type Query {
+  sites: [String]
+  site(sitename: String): JSON
+  migrationReport: [EntityReport]
+  sourceReport(software: String! = "phpbb"): [EntityReport]
+  entityConfiguration(contentType: String!): EntityConfiguration
+  missingReport(sitename: String): [MissingEntityReport]
+}
+
+type MissingEntityReport {
+  # Human-readable name of the entity
+  title: String
+  # Unique string ID of the entity
+  key: String
+  # Count of eligible entities on source
+  sourceCount: Int
+  # Count of migrated entities as logged in migration table
+  migratedCount: Int
+  # Difference between migrated and source counts
+  missingCount: Int
+  # Count of skipped entities as logged in skipped table
+  skippedCount: Int
+
+  skipped: [SkippedEntry]
+  missing: [MissingEntry]
+}
+
+type SkippedEntry {
+  reason: String
+  count: Int
+}
+
+type MissingEntry {
+  id: Int
+  data: JSON
+}
+
+type EntityReport {
+  contentType: String
+  count: Int
+}
+
+type EntityConfiguration {
+  name: String
+  table: String
+  select: String
+  count: String
+}

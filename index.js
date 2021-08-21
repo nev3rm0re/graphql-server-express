@@ -4,13 +4,18 @@ dotenv.config();
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const { makeExecutableSchema } = require('@graphql-tools/schema');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const fs = require('fs');
+const axios = require('axios');
 
 const SITE_PREFIX = 'phpbb_';
+const sitesadminClient = axios.create({
+  baseURL: process.env.SITESADMIN_URL,
+});
 
-const getConnection = async (databaseName = 'crxcommunity.com_target') => {
+const getConnection = async (databaseName = process.env.DEBUG_TARGET_NAME) => {
   return mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -30,156 +35,11 @@ const prefix = (strings, ...vars) => {
   return result.replace(/`([^`]*)`/g, SITE_PREFIX + '$1');
 };
 
-var schema = buildSchema(`
-    type Query {
-        sites: [String]
-        migrationReport: [EntityReport]
-        sourceReport(software: String! = "phpbb" ): [EntityReport]
-        entityConfiguration(contentType: String!): EntityConfiguration
-    }
-    
-    type EntityReport {
-        contentType: String
-        count: Int
-    }
+var schema = makeExecutableSchema({
+  typeDefs: fs.readFileSync('./schema/schema.gql', 'utf8'),
+});
 
-    type EntityConfiguration {
-      name: String
-      table: String
-      select: String
-      count: String
-    }
-    `);
-
-const config = {
-  entities: [
-    {
-      name: 'attachment',
-      table: 'attachments',
-      where: `is_orphan = 0
-				AND post_msg_id > 0
-				AND in_message IN (0,1)`,
-    },
-    {
-      name: 'category',
-      table: 'forums',
-      where: 'forum_type NOT IN (1, 2)',
-    },
-    {
-      name: 'forum',
-      table: 'forums',
-      where: 'forum_type = 1',
-    },
-    {
-      name: 'poll',
-      table: 'polls',
-      select: `SELECT DISTINCT(polls.topic_id),
-				topics.poll_title, topics.poll_start, topics.poll_length,
-				topics.poll_max_options, topics.poll_last_vote, topics.poll_vote_change
-			FROM \`poll_options\` AS polls
-			INNER JOIN \`topics\` AS topics ON (topics.topic_id = polls.topic_id)
-			WHERE topics.poll_title != ''
-			ORDER BY polls.topic_id`,
-      count: `SELECT COUNT(DISTINCT(polls.topic_id)) AS count
-			FROM \`poll_options\` AS polls
-			INNER JOIN \`topics\` AS topics ON (topics.topic_id = polls.topic_id)
-			WHERE topics.poll_title != ''
-			`,
-    },
-    {
-      name: 'thread',
-      table: 'topics',
-      select: `
-        SELECT topics.*, 
-               topic_posts_approved AS topic_replies, 
-               topic_visibility AS topic_approved,
-				       IF(users.username IS NOT NULL, users.username, topics.topic_first_poster_name) AS username
-			    FROM topics AS topics FORCE INDEX (PRIMARY)
-			         LEFT JOIN users AS users ON (topics.topic_poster = users.user_id)
-			         INNER JOIN forums AS forums ON (topics.forum_id = forums.forum_id)
-			   ORDER BY topics.topic_id
-      `,
-      count: `
-        SELECT COUNT(*) AS count
-			    FROM \`topics\` AS topics FORCE INDEX (PRIMARY)
-			         LEFT JOIN \`users\` AS users ON (topics.topic_poster = users.user_id)
-			         INNER JOIN \`forums\` AS forums ON (topics.forum_id = forums.forum_id)
-			   ORDER BY topics.topic_id
-      `,
-    },
-    {
-      name: 'post',
-      table: 'posts',
-      select: `
-        SELECT posts.*, 
-               post_visibility AS post_approved,
-				       IF(users.username IS NOT NULL, users.username, posts.post_username) AS username
-          FROM posts AS posts
-               LEFT JOIN users AS users ON (posts.poster_id = users.user_id)
-         WHERE posts.topic_id = ?
-               AND posts.post_time > ?
-         ORDER BY posts.post_time
-      `,
-      count: `
-        SELECT COUNT(*) AS count
-          FROM \`posts\` AS posts
-               LEFT JOIN \`users\` AS users ON (posts.poster_id = users.user_id)
-         WHERE posts.topic_id IN (
-               SELECT topic_id
-			           FROM \`topics\` AS topics FORCE INDEX (PRIMARY)
-			                LEFT JOIN \`users\` AS users ON (topics.topic_poster = users.user_id)
-			                INNER JOIN \`forums\` AS forums ON (topics.forum_id = forums.forum_id)
-			          ORDER BY topics.topic_id
-               )
-         ORDER BY posts.post_time
-      `,
-    },
-    {
-      name: 'user',
-      table: 'users',
-      select: `
-        SELECT users.*, 
-               pfd.*,
-               ban.*, 
-               users.user_id, 
-               1 AS user_dst,
-               {$websiteColSql} AS user_website,
-               {$interestsColSql} AS user_interests,
-               {$locationColSql} AS user_from
-          FROM users AS users
-               LEFT JOIN profile_fields_data AS pfd ON (pfd.user_id = users.user_id)
-               LEFT JOIN banlist AS ban ON (ban.ban_userid = users.user_id AND (ban.ban_end = 0 OR ban.ban_end > NOW()))
-			   WHERE users.user_type <> 2
-			   ORDER BY users.user_id
-      `,
-      count: `
-        SELECT COUNT(*) AS count
-          FROM \`users\` AS users
-               LEFT JOIN \`profile_fields_data\` AS pfd ON (pfd.user_id = users.user_id)
-               LEFT JOIN \`banlist\` AS ban ON (ban.ban_userid = users.user_id AND (ban.ban_end = 0 OR ban.ban_end > NOW()))
-			   WHERE users.user_type <> 2
-			   ORDER BY users.user_id
-      `,
-    },
-    {
-      name: 'private_message',
-      table: 'privmsgs',
-      select: `
-        SELECT pms.*, users.username
-			    FROM \`privmsgs\` AS pms
-               LEFT JOIN \`users\` AS users ON (pms.author_id = users.user_id)
-         ORDER BY pms.msg_id
-
-      `,
-      count: `
-        SELECT COUNT(*) AS count
-			    FROM \`privmsgs\` AS pms
-               LEFT JOIN \`users\` AS users ON (pms.author_id = users.user_id)
-         ORDER BY pms.msg_id
-      `,
-    },
-  ],
-};
+const { config: defaults } = require('./config/phpbb.js');
 
 const getEntityCount = async (connection, contentType) => {
   const selectPart = 'COUNT(*) AS count';
@@ -204,7 +64,129 @@ const getEntityCount = async (connection, contentType) => {
   };
 };
 
+const fetchSiteInfo = async (sitename) => {
+  return await sitesadminClient.post(
+    process.env.SITESADMIN_URL + '/api/fetchSite',
+    'sitename=' + sitename.toLowerCase(),
+    {
+      headers: {
+        apiKey: process.env.SITESADMIN_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    },
+  );
+};
+
+const getMigratedCount = async (connection, entity) => {
+  const [rows, fields] = await connection.query(
+    `SELECT COUNT(import_log_id) AS count
+       FROM \`PhpBb_migration\`
+      WHERE content_type = "${entity}"
+                `,
+  );
+  console.log(rows);
+
+  return parseInt(rows[0]['count']);
+};
+
+const getSourceIDs = async (connection, entity) => {
+  const [rows, fields] = await connection.query(
+    prefix`
+      SELECT pm.msg_id AS source_id FROM \`privmsgs\` AS pm
+    `,
+  );
+
+  return rows.map(({ source_id }) => source_id);
+};
+const getTargetIDs = async (
+  connection,
+  { primaryKey, entityTable, migrationTable, contentType },
+) => {
+  try {
+    const [rows, fields] = await connection.query(
+      `
+    SELECT ${primaryKey} AS target_id 
+      FROM ${entityTable} AS cm
+           INNER JOIN ${migrationTable} AS m
+           ON (
+              m.new_id = ${primaryKey}
+              AND m.content_type = ?
+              )`,
+      [contentType],
+    );
+    return rows.map(({ target_id }) => target_id);
+  } catch (err) {
+    if (err.sql && err.sqlMessage) {
+      throw new Error(`Error in query - ${err.sqlMessage}\n${err.sql}`);
+    } else {
+      throw err;
+    }
+  }
+};
+
+const findMissing = async ({ source, target }, entity) => {
+  const sourceIDs = await getSourceIDs(source, entity);
+  const targetIDs = await getTargetIDs(target, {
+    migrationTable: 'PhpBb_migration',
+    primaryKey: 'cm.conversation_id',
+    entityTable: 'xf_conversation_master',
+    contentType: 'conversation',
+  });
+
+  // This one takes 11 seconds
+  // console.time('algo1');
+  // const missingIDs = sourceIDs.filter((x) => !targetIDs.includes(x));
+  // console.timeEnd('algo1');
+
+  // This one took 17ms
+  // console.time('algo2');
+  const targetSet = new Set(targetIDs);
+  const missingIDs = sourceIDs.filter((x) => !targetSet.has(x));
+  // console.timeEnd('algo2');
+  console.log('Counted ', missingIDs.length, 'missing IDs');
+  return missingIDs.map((x) => ({ id: x, data: null }));
+};
+
 const root = {
+  site: async ({ sitename }) => {
+    const envelope = await fetchSiteInfo(sitename);
+    const siteInfo = JSON.parse(envelope.data.message);
+    return siteInfo;
+  },
+  missingReport: async () => {
+    const entity = 'private_message';
+    const entityConfig = config.entities.find((value) => value.name === entity);
+    const sourceDB = await getConnection(process.env.DEBUG_SOURCE_NAME);
+    const targetDB = await getConnection(process.env.DEBUG_TARGET_NAME);
+
+    const [migratedCount, { count: sourceCount }] = await Promise.all([
+      getMigratedCount(targetDB, entityConfig.logKey),
+      getEntityCount(sourceDB, entity),
+    ]);
+    const missingCount = sourceCount - migratedCount;
+
+    const missing = await findMissing(
+      { source: sourceDB, target: targetDB },
+      'private_message',
+    );
+    return [
+      {
+        title: entityConfig.title,
+        key: entityConfig.name,
+        sourceCount,
+        migratedCount,
+        missingCount,
+        skippedCount: 1,
+        skipped: [
+          {
+            reason: 'File was not found on source',
+            count: 1,
+          },
+        ],
+        missing,
+      },
+    ];
+  },
   sites: () => {
     const files = fs.readdirSync(process.env.SITES_CONFIG_FOLDER);
     const siteNames = files.reduce((carry, envFile) => {
@@ -247,7 +229,7 @@ const root = {
     return config.entities.find((el) => el.name === contentType) ?? null;
   },
   sourceReport: async () => {
-    const connection = await getConnection('crxcommunity.com_source');
+    const connection = await getConnection(process.env.DEBUG_SOURCE_NAME);
     const promises = config.entities.reduce((carry, entity) => {
       carry.push(getEntityCount(connection, entity.name));
       return carry;
