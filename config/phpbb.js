@@ -1,42 +1,43 @@
-exports.defaults = config = {
-  entities: [
-    {
-      name: 'attachment',
-      table: 'attachments',
-      where: `is_orphan = 0
+module.exports = {
+  config: {
+    entities: [
+      {
+        name: 'attachment',
+        table: 'attachments',
+        where: `is_orphan = 0
 				AND post_msg_id > 0
 				AND in_message IN (0,1)`,
-    },
-    {
-      name: 'category',
-      table: 'forums',
-      where: 'forum_type NOT IN (1, 2)',
-    },
-    {
-      name: 'forum',
-      table: 'forums',
-      where: 'forum_type = 1',
-    },
-    {
-      name: 'poll',
-      table: 'polls',
-      select: `SELECT DISTINCT(polls.topic_id),
+      },
+      {
+        name: 'category',
+        table: 'forums',
+        where: 'forum_type NOT IN (1, 2)',
+      },
+      {
+        name: 'forum',
+        table: 'forums',
+        where: 'forum_type = 1',
+      },
+      {
+        name: 'poll',
+        table: 'polls',
+        select: `SELECT DISTINCT(polls.topic_id),
 				topics.poll_title, topics.poll_start, topics.poll_length,
 				topics.poll_max_options, topics.poll_last_vote, topics.poll_vote_change
 			FROM \`poll_options\` AS polls
 			INNER JOIN \`topics\` AS topics ON (topics.topic_id = polls.topic_id)
 			WHERE topics.poll_title != ''
 			ORDER BY polls.topic_id`,
-      count: `SELECT COUNT(DISTINCT(polls.topic_id)) AS count
+        count: `SELECT COUNT(DISTINCT(polls.topic_id)) AS count
 			FROM \`poll_options\` AS polls
 			INNER JOIN \`topics\` AS topics ON (topics.topic_id = polls.topic_id)
 			WHERE topics.poll_title != ''
 			`,
-    },
-    {
-      name: 'thread',
-      table: 'topics',
-      select: `
+      },
+      {
+        name: 'thread',
+        table: 'topics',
+        select: `
         SELECT topics.*, 
                topic_posts_approved AS topic_replies, 
                topic_visibility AS topic_approved,
@@ -46,18 +47,18 @@ exports.defaults = config = {
 			         INNER JOIN forums AS forums ON (topics.forum_id = forums.forum_id)
 			   ORDER BY topics.topic_id
       `,
-      count: `
+        count: `
         SELECT COUNT(*) AS count
 			    FROM \`topics\` AS topics FORCE INDEX (PRIMARY)
 			         LEFT JOIN \`users\` AS users ON (topics.topic_poster = users.user_id)
 			         INNER JOIN \`forums\` AS forums ON (topics.forum_id = forums.forum_id)
 			   ORDER BY topics.topic_id
       `,
-    },
-    {
-      name: 'post',
-      table: 'posts',
-      select: `
+      },
+      {
+        name: 'post',
+        table: 'posts',
+        select: `
         SELECT posts.*, 
                post_visibility AS post_approved,
 				       IF(users.username IS NOT NULL, users.username, posts.post_username) AS username
@@ -67,7 +68,7 @@ exports.defaults = config = {
                AND posts.post_time > ?
          ORDER BY posts.post_time
       `,
-      count: `
+        count: `
         SELECT COUNT(*) AS count
           FROM \`posts\` AS posts
                LEFT JOIN \`users\` AS users ON (posts.poster_id = users.user_id)
@@ -80,11 +81,11 @@ exports.defaults = config = {
                )
          ORDER BY posts.post_time
       `,
-    },
-    {
-      name: 'user',
-      table: 'users',
-      select: `
+      },
+      {
+        name: 'user',
+        table: 'users',
+        select: `
         SELECT users.*, 
                pfd.*,
                ban.*, 
@@ -99,7 +100,7 @@ exports.defaults = config = {
 			   WHERE users.user_type <> 2
 			   ORDER BY users.user_id
       `,
-      count: `
+        count: `
         SELECT COUNT(*) AS count
           FROM \`users\` AS users
                LEFT JOIN \`profile_fields_data\` AS pfd ON (pfd.user_id = users.user_id)
@@ -107,25 +108,26 @@ exports.defaults = config = {
 			   WHERE users.user_type <> 2
 			   ORDER BY users.user_id
       `,
-    },
-    {
-      name: 'private_message',
-      title: 'Private messages',
-      logKey: 'conversation',
-      table: 'privmsgs',
-      select: `
+      },
+      {
+        name: 'private_message',
+        title: 'Private messages',
+        logKey: 'conversation',
+        table: 'privmsgs',
+        select: `
         SELECT pms.*, users.username
 			    FROM \`privmsgs\` AS pms
                LEFT JOIN \`users\` AS users ON (pms.author_id = users.user_id)
          ORDER BY pms.msg_id
 
       `,
-      count: `
+        count: `
         SELECT COUNT(*) AS count
 			    FROM \`privmsgs\` AS pms
                LEFT JOIN \`users\` AS users ON (pms.author_id = users.user_id)
          ORDER BY pms.msg_id
       `,
-    },
-  ],
+      },
+    ],
+  },
 };
