@@ -24,6 +24,21 @@ const MISSING_REPORT_QUERY = `{
    skippedCount
  }
 }`;
+const CONFIGURATION_QUERY = `{
+    entityConfiguration(contentType: "attachment") {
+        name
+        select
+        count
+    }
+}`;
+
+const WRONG_CONFIGURATION_QUERY = `{
+    entityConfiguration(contentType: "non-existent") {
+        name
+        select
+        count
+    }
+}`;
 const createClient = (chai) => {
   return chai
     .request(server)
@@ -38,8 +53,10 @@ const expectSuccessfulResponse = (done) => {
     res.body.should.have.property('data');
 
     const errors = res.body.errors || [];
-    if (errors) console.log('Got unexpected errors', errors);
+    if (errors.length) console.log('Got unexpected errors', errors);
     errors.should.be.empty;
+
+    console.debug(res.body);
 
     done();
   };
@@ -61,4 +78,20 @@ describe('GraphQL Server', () => {
       .send(MISSING_REPORT_QUERY)
       .end(expectSuccessfulResponse(done));
   }).timeout(10000);
+
+  it('Successfully fetches configuration', (done) => {
+    createClient(chai)
+      .send(CONFIGURATION_QUERY)
+      .end(expectSuccessfulResponse(done));
+  }).timeout(1000);
+
+  it('Returns null when asked for non-existent configuration', (done) => {
+    createClient(chai)
+      .send(WRONG_CONFIGURATION_QUERY)
+      .end((err, res) => {
+        expectSuccessfulResponse(done)(err, res);
+        res.body.should.have.deep.nested.property('data.entityConfiguration');
+        should.equal(res.body.data.entityConfiguration, null);
+      });
+  });
 });
