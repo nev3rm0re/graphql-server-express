@@ -3,7 +3,7 @@ const { config } = require('./config/phpbb.js');
 const getEntityCount = async (connection, contentType) => {
   const selectPart = 'COUNT(*) AS count';
 
-  const entity = ({ name, table, where } = config.entities.find(
+  const entity = ({ table, where } = config.entities.find(
     (entity) => entity.name === contentType,
   ));
 

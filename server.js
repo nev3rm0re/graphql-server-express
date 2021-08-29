@@ -7,12 +7,12 @@ const { graphqlHTTP } = require('express-graphql');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const cors = require('cors');
 const fs = require('fs');
+const root = require('./resolvers');
 
 var schema = makeExecutableSchema({
   typeDefs: fs.readFileSync('./schema/schema.gql', 'utf8'),
+  resolvers: root.resolvers,
 });
-
-const root = require('./resolvers');
 
 const app = express();
 

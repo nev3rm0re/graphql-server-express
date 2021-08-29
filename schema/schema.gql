@@ -3,8 +3,7 @@ scalar JSON
 type Query {
   sites: [String]
   site(sitename: String): JSON
-  migrationReport: [EntityReport]
-  sourceReport(software: String! = "phpbb"): [EntityReport]
+  migrationReport(sitename: String): [EntityReport]
   entityConfiguration(contentType: String!): EntityConfiguration
   missingReport(sitename: String): [MissingEntityReport]
 }

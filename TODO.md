@@ -1,0 +1,2 @@
+- Move testing dependencies to `devDependencies`
+-

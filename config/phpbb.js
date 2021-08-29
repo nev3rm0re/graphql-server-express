@@ -7,16 +7,19 @@ module.exports = {
         where: `is_orphan = 0
 				AND post_msg_id > 0
 				AND in_message IN (0,1)`,
+        logKey: 'attachment',
       },
       {
         name: 'category',
         table: 'forums',
         where: 'forum_type NOT IN (1, 2)',
+        logKey: 'category',
       },
       {
         name: 'forum',
         table: 'forums',
         where: 'forum_type = 1',
+        logKey: 'forum',
       },
       {
         name: 'poll',
@@ -33,6 +36,7 @@ module.exports = {
 			INNER JOIN \`topics\` AS topics ON (topics.topic_id = polls.topic_id)
 			WHERE topics.poll_title != ''
 			`,
+        logKey: 'poll',
       },
       {
         name: 'thread',
@@ -54,6 +58,7 @@ module.exports = {
 			         INNER JOIN \`forums\` AS forums ON (topics.forum_id = forums.forum_id)
 			   ORDER BY topics.topic_id
       `,
+        logKey: 'thread',
       },
       {
         name: 'post',
@@ -81,6 +86,7 @@ module.exports = {
                )
          ORDER BY posts.post_time
       `,
+        logKey: 'post',
       },
       {
         name: 'user',
@@ -108,6 +114,7 @@ module.exports = {
 			   WHERE users.user_type <> 2
 			   ORDER BY users.user_id
       `,
+        logKey: 'user',
       },
       {
         name: 'private_message',

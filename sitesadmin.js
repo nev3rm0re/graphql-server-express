@@ -3,7 +3,7 @@ const sitesadminClient = axios.create({
   baseURL: process.env.SITESADMIN_URL,
 });
 const fetchSiteInfo = async (sitename) => {
-  return await sitesadminClient.post(
+  const { data } = await sitesadminClient.post(
     process.env.SITESADMIN_URL + '/api/fetchSite',
     'sitename=' + sitename.toLowerCase(),
     {
@@ -13,5 +13,10 @@ const fetchSiteInfo = async (sitename) => {
       },
     },
   );
+  if (data.status) {
+    return JSON.parse(data.message);
+  } else {
+    return new Error(data.message);
+  }
 };
 module.exports = { fetchSiteInfo };

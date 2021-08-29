@@ -20,7 +20,6 @@ const MISSING_REPORT_QUERY = `{
    key
    sourceCount
    migratedCount
-   missingCount
    skippedCount
  }
 }`;
@@ -39,11 +38,6 @@ const WRONG_CONFIGURATION_QUERY = `{
         count
     }
 }`;
-
-const SITES_ADMIN_QUERY = `
-{
-    site(sitename: "crxcommunity.com")
-}`;
 const createClient = (chai) => {
   return chai
     .request(server)
@@ -58,39 +52,38 @@ const expectSuccessfulResponse = (done) => {
     res.body.should.have.property('data');
 
     const errors = res.body.errors || [];
-    if (errors.length) console.log('Got unexpected errors', errors);
+    if (errors.length) {
+      console.log('Got unexpected errors at', errors);
+      console.debug(errors[0].locations);
+    }
     errors.should.be.empty;
 
-    console.debug(res.body);
+    console.debug(res.body.data);
 
     done();
   };
 };
 
-describe('GraphQL Server', () => {
-  it('Successfully returns a list of sites configured on the server', (done) => {
+describe('GraphQL Server returns', () => {
+  it('list of sites configured on the server', (done) => {
     createClient(chai).send(SITES_QUERY).end(expectSuccessfulResponse(done));
   });
 
-  it('Successfully fetches site information from SitesAdmin', (done) => {
-    createClient(chai)
-      .send(SITE_INFO_QUERY)
-      .end(expectSuccessfulResponse(done));
-  }).timeout(2000);
-
-  it('Successfully fetches missing report', (done) => {
+  it('Missing report', (done) => {
     createClient(chai)
       .send(MISSING_REPORT_QUERY)
-      .end(expectSuccessfulResponse(done));
-  }).timeout(10000);
+      .end((err, res) => {
+        expectSuccessfulResponse(done)(err, res);
+      });
+  }).timeout(15000);
 
-  it('Successfully fetches configuration', (done) => {
+  it('Entity Configuration', (done) => {
     createClient(chai)
       .send(CONFIGURATION_QUERY)
       .end(expectSuccessfulResponse(done));
   }).timeout(1000);
 
-  it('Returns null when asked for non-existent configuration', (done) => {
+  it('Null when asked for non-existent configuration', (done) => {
     createClient(chai)
       .send(WRONG_CONFIGURATION_QUERY)
       .end((err, res) => {
@@ -99,9 +92,12 @@ describe('GraphQL Server', () => {
         should.equal(res.body.data.entityConfiguration, null);
       });
   });
-  it('Allows to query SitesAdmin for the site information', (done) => {
+  it('SitesAdmin info for the site', (done) => {
     createClient(chai)
-      .send(SITES_ADMIN_QUERY)
-      .end(expectSuccessfulResponse(done));
+      .send(SITE_INFO_QUERY)
+      .end((err, res) => {
+        expectSuccessfulResponse(done)(err, res);
+        should.not.equal(res.body.data.site, null);
+      });
   });
 });

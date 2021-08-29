@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "nodemon index.js"
+},
   "dependencies": {
     "@graphql-tools/schema": "^8.1.1",
     "axios": "^0.21.1",
