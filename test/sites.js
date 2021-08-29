@@ -39,6 +39,11 @@ const WRONG_CONFIGURATION_QUERY = `{
         count
     }
 }`;
+
+const SITES_ADMIN_QUERY = `
+{
+    site(sitename: "crxcommunity.com")
+}`;
 const createClient = (chai) => {
   return chai
     .request(server)
@@ -93,5 +98,10 @@ describe('GraphQL Server', () => {
         res.body.should.have.deep.nested.property('data.entityConfiguration');
         should.equal(res.body.data.entityConfiguration, null);
       });
+  });
+  it('Allows to query SitesAdmin for the site information', (done) => {
+    createClient(chai)
+      .send(SITES_ADMIN_QUERY)
+      .end(expectSuccessfulResponse(done));
   });
 });
