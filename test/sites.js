@@ -23,6 +23,22 @@ const MISSING_REPORT_QUERY = `{
    skippedCount
  }
 }`;
+const MISSING_REPORT_WITH_MISSING_COUNTS_QUERY = `{
+    missingReport {
+        title
+        missingCount
+    }
+}`;
+
+const MISSING_REPORT_WITH_MISSING_ITEMS_QUERY = `{
+    missingReport {
+        title
+        missing {
+            id
+            data
+        }
+    }
+}`;
 const CONFIGURATION_QUERY = `{
     entityConfiguration(contentType: "attachment") {
         name
@@ -75,7 +91,19 @@ describe('GraphQL Server returns', () => {
       .end((err, res) => {
         expectSuccessfulResponse(done)(err, res);
       });
-  }).timeout(15000);
+  }).timeout(3000);
+
+  it('Missing report with missing counts', (done) => {
+    createClient(chai)
+      .send(MISSING_REPORT_WITH_MISSING_COUNTS_QUERY)
+      .end(expectSuccessfulResponse(done));
+  }).timeout(20000);
+
+  it('Missing report with missing items', (done) => {
+    createClient(chai)
+      .send(MISSING_REPORT_WITH_MISSING_ITEMS_QUERY)
+      .end(expectSuccessfulResponse(done));
+  }).timeout(30000);
 
   it('Entity Configuration', (done) => {
     createClient(chai)

@@ -2,29 +2,15 @@ const mysql = require('mysql2/promise');
 const fs = require('fs');
 const dotenv = require('dotenv');
 
+const connectionManager = require('./database.js');
+const php = require('./php.js');
+
 const { fetchSiteInfo } = require('./sitesadmin.js');
 
 const { config } = require('./config/phpbb.js');
 
 const { getEntityCount, findMissing, getSourceIDs } = require('./report.js');
 
-const pools = {};
-
-const getConnection = async (databaseName = process.env.DEBUG_TARGET_NAME) => {
-  if (!pools[databaseName]) {
-    pools[databaseName] = mysql.createPool({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      port: 3307,
-      database: databaseName,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-    });
-  }
-  return await pools[databaseName].getConnection();
-};
 const getMigratedCount = async (connection, entity) => {
   const [rows, fields] = await connection.query(
     `SELECT COUNT(import_log_id) AS count
@@ -40,8 +26,16 @@ const resolvers = {
     site: async (parent, { sitename }) => {
       return await fetchSiteInfo(sitename);
     },
-    migrationReport: async (_, { sitename }) => {
-      const connection = await getConnection();
+    unserialize: async (_, args) => {
+      try {
+        const out = await php.unserialize(args.input);
+        return JSON.parse(out.stdout);
+      } catch (e) {
+        return new Error(e.stderr);
+      }
+    },
+    migrationReport: async (_, { sitename }, context) => {
+      const connection = await context.connectionManager(DEBUG_TARGET_NAME);
       const [rows, fields] = await connection.query(
         `SELECT 
                     content_type,
@@ -57,7 +51,7 @@ const resolvers = {
       }));
     },
     missingReport: async (_, params) => {
-      return config.entities.map((config) => {
+      return config.getEntities().map((config) => {
         return {
           ...config,
           key: config.name,
@@ -93,22 +87,27 @@ const resolvers = {
   },
   MissingEntityReport: {
     sourceCount: async (parent, args, context) => {
-      const sourceDB = await getConnection(process.env.DEBUG_SOURCE_NAME);
+      const sourceDB = await context.connectionManager(
+        process.env.DEBUG_SOURCE_NAME,
+      );
       const sourceCount = await getEntityCount(sourceDB, parent.name);
       return sourceCount.count;
     },
     migratedCount: async (parent, args, context) => {
-      const targetDB = await getConnection(process.env.DEBUG_TARGET_NAME);
+      const targetDB = await context.connectionManager(
+        process.env.DEBUG_TARGET_NAME,
+      );
       const migratedCount = await getMigratedCount(targetDB, parent.logKey);
       return migratedCount;
     },
     missingCount: async (parent, args, context) => {
-      const targetDB = await getConnection(process.env.DEBUG_TARGET_NAME);
-      const { count: migratedCount } = await getMigratedCount(
-        targetDB,
-        parent.logKey,
+      const targetDB = await context.connectionManager(
+        process.env.DEBUG_TARGET_NAME,
       );
-      const sourceDB = await getConnection(process.env.DEBUG_SOURCE_NAME);
+      const migratedCount = await getMigratedCount(targetDB, parent.logKey);
+      const sourceDB = await context.connectionManager(
+        process.env.DEBUG_SOURCE_NAME,
+      );
       const { count: sourceCount } = await getEntityCount(
         sourceDB,
         parent.name,
@@ -117,8 +116,12 @@ const resolvers = {
       return sourceCount - migratedCount;
     },
     missing: async (parent, args, context) => {
-      const sourceDB = await getConnection(process.env.DEBUG_SOURCE_NAME);
-      const targetDB = await getConnection(process.env.DEBUG_TARGET_NAME);
+      const sourceDB = await context.connectionManager(
+        process.env.DEBUG_SOURCE_NAME,
+      );
+      const targetDB = await context.connectionManager(
+        process.env.DEBUG_TARGET_NAME,
+      );
       return await findMissing(
         { source: sourceDB, target: targetDB },
         parent.name,

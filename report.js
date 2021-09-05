@@ -34,6 +34,9 @@ const prefix = (strings, ...vars) => {
   return result.replace(/`([^`]*)`/g, SITE_PREFIX + '$1');
 };
 const findMissing = async ({ source, target }, entity) => {
+  if (!config.mapping[entity]) {
+    return [];
+  }
   const sourceIDs = await getSourceIDs(source, entity);
   const targetIDs = await getTargetIDs(target, {
     migrationTable: 'PhpBb_migration',

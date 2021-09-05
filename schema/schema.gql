@@ -2,6 +2,7 @@ scalar JSON
 
 type Query {
   sites: [String]
+  unserialize(input: String): JSON
   site(sitename: String): JSON
   migrationReport(sitename: String): [EntityReport]
   entityConfiguration(contentType: String!): EntityConfiguration
