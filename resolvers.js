@@ -26,11 +26,13 @@ const resolvers = {
     site: async (parent, { sitename }) => {
       return await fetchSiteInfo(sitename);
     },
-    unserialize: async (_, args) => {
+    unserialize: async (_, { input, outputFormat = 'json' }) => {
       try {
-        const out = await php.unserialize(args.input);
-        return JSON.parse(out.stdout);
+        const out = await php.unserialize(input, outputFormat);
+        console.log('Returning out', out);
+        return out.stdout;
       } catch (e) {
+        console.log('Error', e);
         return new Error(e.stderr);
       }
     },
