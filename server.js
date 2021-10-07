@@ -7,6 +7,7 @@ const { graphqlHTTP } = require('express-graphql');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const cors = require('cors');
 const fs = require('fs');
+const path = require('path');
 const { resolvers } = require('./resolvers');
 const getConnection = require('./database');
 
@@ -18,6 +19,7 @@ var schema = makeExecutableSchema({
 const app = express();
 
 app.use(cors());
+app.use(express.static(path.join(__dirname, 'build')));
 app.use(
   '/graphql',
   graphqlHTTP({
@@ -28,5 +30,8 @@ app.use(
     },
   }),
 );
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 module.exports = { app };
