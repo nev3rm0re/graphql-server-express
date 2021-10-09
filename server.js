@@ -19,7 +19,6 @@ var schema = makeExecutableSchema({
 const app = express();
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'build')));
 app.use(
   '/graphql',
   graphqlHTTP({
@@ -30,8 +29,5 @@ app.use(
     },
   }),
 );
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
 
 module.exports = { app };
