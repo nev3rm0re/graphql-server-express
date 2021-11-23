@@ -15,6 +15,7 @@ module.exports.typeDefs = `
         sitename: String
         migrated: Boolean
         retroactive: Boolean
+        source: Boolean
     }
 `;
 
@@ -25,9 +26,14 @@ const getInfoForSite = async (sitename, getConnection) => {
 
   const targetDbName =
     vars['TARGET_DATABASE_NAME'] || vars['MIGRATION_SITENAME'] + '_target';
+  const sourceDbName =
+    vars['SOURCE_DATABASE_NAME'] || vars['MIGRATION_SITENAME'] + '_source';
 
   let migrated = false;
+  let source = false;
   try {
+    const sourceDb = await getConnection(sourceDbName);
+    source = Boolean(sourceDb);
     const conn = await getConnection(targetDbName);
     const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
     migrated = tables.length > 0;
@@ -39,6 +45,7 @@ const getInfoForSite = async (sitename, getConnection) => {
     env: sitename,
     sitename: vars['MIGRATION_SITENAME'],
     migrated,
+    source,
   };
 };
 
