@@ -14,6 +14,7 @@ const SITES_QUERY = `{ sites {
   env
   migrated
   sitename
+  source
 }}`;
 const SITE_INFO_QUERY = `{
     site(sitename: "crxcommunity.com")

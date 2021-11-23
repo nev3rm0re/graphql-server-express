@@ -33,7 +33,9 @@ const getInfoForSite = async (sitename, getConnection) => {
   let source = false;
   try {
     const sourceDb = await getConnection(sourceDbName);
-    source = Boolean(sourceDb);
+    const sourceTables = sourceDb.query('SHOW TABLES');
+
+    source = sourceTables.length > 0;
     const conn = await getConnection(targetDbName);
     const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
     migrated = tables.length > 0;
