@@ -26,13 +26,19 @@ const getInfoForSite = async (sitename, getConnection) => {
   const targetDbName =
     vars['TARGET_DATABASE_NAME'] || vars['MIGRATION_SITENAME'] + '_target';
 
-  const conn = await getConnection(targetDbName);
-  const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
+  let migrated = false;
+  try {
+    const conn = await getConnection(targetDbName);
+    const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
+    migrated = tables.length > 0;
+  } catch (e) {
+    migrated = false;
+  }
 
   return {
     env: sitename,
     sitename: vars['MIGRATION_SITENAME'],
-    migrated: tables.length > 0,
+    migrated,
   };
 };
 
