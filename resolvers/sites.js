@@ -1,5 +1,8 @@
 const fs = require('fs');
+const util = require('util');
 const dotenv = require('dotenv');
+
+const readFile = util.promisify(fs.readFile);
 
 module.exports = {};
 module.exports.typeDefs = `
@@ -15,27 +18,30 @@ module.exports.typeDefs = `
     }
 `;
 
+const getInfoForSite = async (sitename) => {
+  const fullpath = process.env.SITES_CONFIG_FOLDER + '/.env.' + sitename;
+  const contents = await readFile(fullpath);
+  const vars = dotenv.parse(contents);
+  return {
+    env: sitename,
+    sitename: vars['MIGRATION_SITENAME'],
+  };
+};
+
 module.exports.resolvers = {
   Query: {
-    sites: () => {
+    sites: async () => {
       const files = fs.readdirSync(process.env.SITES_CONFIG_FOLDER);
       const siteNames = files.reduce((carry, envFile) => {
         const matchSitename = envFile.match(/\.env\.(?<sitename>[a-z0-9_-]*)/);
-
         if (matchSitename) {
-          const fullpath = process.env.SITES_CONFIG_FOLDER + envFile;
-          const contents = fs.readFileSync(fullpath);
-          const vars = dotenv.parse(contents);
-          carry.push({
-            env: matchSitename.groups['sitename'],
-            sitename: vars['MIGRATION_SITENAME'],
-          });
+          carry.push(getInfoForSite(matchSitename.groups['sitename']));
         }
 
         return carry;
       }, []);
 
-      return siteNames;
+      return await Promise.all(siteNames);
     },
   },
 };

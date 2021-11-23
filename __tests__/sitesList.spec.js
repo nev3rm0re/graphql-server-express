@@ -15,13 +15,17 @@ describe('Query sites', () => {
     jest.setTimeout(10 * 1000);
     expect.assertions = 1;
     const query = `query {
-        sites
+        sites {
+          env
+          sitename
+          migrated
+        }
     }`;
 
     const result = await queryServer(query);
     expect(result.data).toMatchSnapshot();
 
-    console.log('done getting result', result);
+    console.log('done getting result', result.data);
     return result;
   });
 });
