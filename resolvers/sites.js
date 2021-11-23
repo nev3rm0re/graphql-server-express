@@ -7,7 +7,7 @@ const readFile = util.promisify(fs.readFile);
 module.exports = {};
 module.exports.typeDefs = `
     extend type Query {
-        sites: [Site]
+        sites(withSource: Boolean = null): [Site]
     }
 
     type Site {
@@ -33,14 +33,14 @@ const getInfoForSite = async (sitename, getConnection) => {
   let source = false;
   try {
     const sourceDb = await getConnection(sourceDbName);
-    const sourceTables = sourceDb.query('SHOW TABLES');
-
+    const sourceTables = await sourceDb.query('SHOW TABLES');
     source = sourceTables.length > 0;
+
     const conn = await getConnection(targetDbName);
     const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
     migrated = tables.length > 0;
   } catch (e) {
-    migrated = false;
+    console.error('Got an expected error querying DB.', e);
   }
 
   return {
