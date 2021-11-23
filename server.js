@@ -11,9 +11,15 @@ const path = require('path');
 const { resolvers } = require('./resolvers');
 const getConnection = require('./database');
 
+const Query = fs.readFileSync('./schema/schema.gql', 'utf8');
+const {
+  typeDefs: sites,
+  resolvers: sitesResolvers,
+} = require('./resolvers/sites');
+
 var schema = makeExecutableSchema({
-  typeDefs: fs.readFileSync('./schema/schema.gql', 'utf8'),
-  resolvers,
+  typeDefs: [Query, sites],
+  resolvers: Object.assign({}, resolvers, sitesResolvers),
 });
 
 const app = express();

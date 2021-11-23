@@ -10,7 +10,11 @@ const should = chai.should();
 
 chai.use(chaiHttp);
 
-const SITES_QUERY = `{ sites }`;
+const SITES_QUERY = `{ sites {
+  env
+  migrated
+  sitename
+}}`;
 const SITE_INFO_QUERY = `{
     site(sitename: "crxcommunity.com")
 }`;
