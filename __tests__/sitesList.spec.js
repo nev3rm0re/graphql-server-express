@@ -19,6 +19,7 @@ describe('Query sites', () => {
           env
           sitename
           migrated
+          source
         }
     }`;
 
