@@ -53,7 +53,7 @@ const getInfoForSite = async (sitename, getConnection) => {
     sitename: vars['MIGRATION_SITENAME'],
     migrated,
     source,
-    retro,
+    retroactive: retro,
   };
 };
 
