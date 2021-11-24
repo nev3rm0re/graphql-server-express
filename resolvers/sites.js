@@ -31,6 +31,8 @@ const getInfoForSite = async (sitename, getConnection) => {
 
   let migrated = false;
   let source = false;
+  let retro = false;
+
   try {
     const sourceDb = await getConnection(sourceDbName);
     const sourceTables = await sourceDb.query('SHOW TABLES');
@@ -39,6 +41,9 @@ const getInfoForSite = async (sitename, getConnection) => {
     const conn = await getConnection(targetDbName);
     const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
     migrated = tables.length > 0;
+
+    const retroTables = await conn.query('SHOW TABLES LIKE "%retroactive%"');
+    retro = retroTables.length > 0;
   } catch (e) {
     console.error('Got an expected error querying DB.', e);
   }
@@ -48,6 +53,7 @@ const getInfoForSite = async (sitename, getConnection) => {
     sitename: vars['MIGRATION_SITENAME'],
     migrated,
     source,
+    retro,
   };
 };
 
