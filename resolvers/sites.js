@@ -59,7 +59,7 @@ const getInfoForSite = async (sitename, getConnection) => {
 
 module.exports.resolvers = {
   Query: {
-    sites: async (_, { withSource = false }, context) => {
+    sites: async (_, { requireSource = false }, context) => {
       const files = fs.readdirSync(process.env.SITES_CONFIG_FOLDER);
       const siteNames = files.reduce((carry, envFile) => {
         const matchSitename = envFile.match(/\.env\.(?<sitename>[a-z0-9_-]*)/);
@@ -76,7 +76,7 @@ module.exports.resolvers = {
       }, []);
 
       const ret = await Promise.all(siteNames);
-      if (withSource === true) {
+      if (requireSource === true) {
         return ret.filter((el) => Boolean(el.source));
       }
     },
