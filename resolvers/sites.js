@@ -39,8 +39,8 @@ const getInfoForSite = async (sitename, getConnection) => {
     source = sourceTables.length > 0;
 
     const conn = await getConnection(targetDbName);
-    const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
-    migrated = tables.map(Object.values);
+    const [resultSet] = await conn.query('SHOW TABLES LIKE "%_migration"');
+    migrated = resultSet.map((row) => Object.values(row)[0]);
 
     const retroTables = await conn.query('SHOW TABLES LIKE "%retroactive%"');
     retro = retroTables.length > 0;
