@@ -7,13 +7,13 @@ const readFile = util.promisify(fs.readFile);
 module.exports = {};
 module.exports.typeDefs = `
     extend type Query {
-        sites(withSource: Boolean = null): [Site]
+        sites(requireSource: Boolean = null): [Site]
     }
 
     type Site {
         env: String
         sitename: String
-        migrated: Boolean
+        migrated: [String]
         retroactive: Boolean
         source: Boolean
     }
@@ -29,7 +29,7 @@ const getInfoForSite = async (sitename, getConnection) => {
   const sourceDbName =
     vars['SOURCE_DATABASE_NAME'] || vars['MIGRATION_SITENAME'] + '_source';
 
-  let migrated = false;
+  let migrated = [];
   let source = false;
   let retro = false;
 
@@ -40,7 +40,7 @@ const getInfoForSite = async (sitename, getConnection) => {
 
     const conn = await getConnection(targetDbName);
     const tables = await conn.query('SHOW TABLES LIKE "%_migration"');
-    migrated = tables.length > 0;
+    migrated = tables;
 
     const retroTables = await conn.query('SHOW TABLES LIKE "%retroactive%"');
     retro = retroTables.length > 0;
