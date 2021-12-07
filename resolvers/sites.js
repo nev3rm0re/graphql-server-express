@@ -79,6 +79,8 @@ module.exports.resolvers = {
       if (requireSource === true) {
         return ret.filter((el) => Boolean(el.source));
       }
+
+      return ret;
     },
   },
 };
