@@ -8,7 +8,6 @@ const { graphqlHTTP } = require('express-graphql');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const cors = require('cors');
 const fs = require('fs');
-const path = require('path');
 const { resolvers } = require('./resolvers');
 const getConnection = require('./database');
 
