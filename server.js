@@ -24,8 +24,6 @@ var schema = makeExecutableSchema({
   resolvers: combinedResolvers,
 });
 
-console.log(combinedResolvers);
-console.log('Testing', resolvers.Query.echo(null, { message: 'test' }));
 const app = express();
 
 app.use(cors());
