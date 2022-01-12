@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const express = require('express');
+const _ = require('lodash');
 
 const { graphqlHTTP } = require('express-graphql');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
@@ -17,11 +18,14 @@ const {
   resolvers: sitesResolvers,
 } = require('./resolvers/sites');
 
+const combinedResolvers = _.merge(resolvers, sitesResolvers);
 var schema = makeExecutableSchema({
   typeDefs: [Query, sites],
-  resolvers: Object.assign({}, resolvers, sitesResolvers),
+  resolvers: combinedResolvers,
 });
 
+console.log(combinedResolvers);
+console.log('Testing', resolvers.Query.echo(null, { message: 'test' }));
 const app = express();
 
 app.use(cors());

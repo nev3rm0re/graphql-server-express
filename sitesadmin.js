@@ -3,6 +3,7 @@ const sitesadminClient = axios.create({
   baseURL: process.env.SITESADMIN_URL,
 });
 const fetchSiteInfo = async (sitename) => {
+  console.log('running with ' + sitename);
   const { data } = await sitesadminClient.post(
     process.env.SITESADMIN_URL + '/api/fetchSite',
     'sitename=' + sitename.toLowerCase(),

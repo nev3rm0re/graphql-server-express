@@ -1,6 +1,7 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const { GraphQLJSON } = require('graphql-type-json');
 
 const connectionManager = require('./database.js');
 const php = require('./php.js');
@@ -22,7 +23,11 @@ const getMigratedCount = async (connection, entity) => {
 };
 
 const resolvers = {
+  JSON: GraphQLJSON,
   Query: {
+    echo: (parent, { message }) => {
+      return message;
+    },
     site: async (parent, { sitename }) => {
       return await fetchSiteInfo(sitename);
     },

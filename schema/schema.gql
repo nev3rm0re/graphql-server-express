@@ -6,6 +6,7 @@ type Query {
   migrationReport(sitename: String): [EntityReport]
   entityConfiguration(contentType: String!): EntityConfiguration
   missingReport(sitename: String): [MissingEntityReport]
+  echo(message: String): String
 }
 
 type MissingEntityReport {
