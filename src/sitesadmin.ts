@@ -1,8 +1,8 @@
-const axios = require('axios');
+import axios from 'axios';
 const sitesadminClient = axios.create({
   baseURL: process.env.SITESADMIN_URL,
 });
-const fetchSiteInfo = async (sitename) => {
+const fetchSiteInfo = async (sitename: string) => {
   const { data } = await sitesadminClient.post(
     process.env.SITESADMIN_URL + '/api/fetchSite',
     'sitename=' + sitename.toLowerCase(),
@@ -19,4 +19,4 @@ const fetchSiteInfo = async (sitename) => {
     return new Error(data.message);
   }
 };
-module.exports = { fetchSiteInfo };
+export { fetchSiteInfo };
