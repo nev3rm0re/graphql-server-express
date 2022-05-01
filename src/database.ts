@@ -2,7 +2,10 @@ import mysql from 'mysql2/promise';
 
 const pools: { [dbName: string]: mysql.Pool } = {};
 
-const getConnection = async (
+/**
+ * Returns MySQL Connection pool configured for `databaseName`
+ */
+export const getConnection = async (
   databaseName: string = process.env.DEBUG_TARGET_NAME || '',
 ): Promise<mysql.Pool> => {
   if (!pools[databaseName]) {
@@ -19,5 +22,3 @@ const getConnection = async (
   }
   return await pools[databaseName];
 };
-
-module.exports = getConnection;

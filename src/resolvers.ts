@@ -5,7 +5,7 @@ import { GraphQLJSON } from 'graphql-type-json';
 
 import php from './php';
 
-import { fetchSiteInfo } from './sitesadmin';
+import { fetchSiteInfo } from './resolvers/sitesadmin';
 
 const { config } = require('../config/phpbb.js');
 
@@ -51,8 +51,8 @@ const resolvers = {
     echo: (parent: object, { message }: { message: string }): string => {
       return message;
     },
-    site: async (parent: object, { sitename }: SiteParameters) => {
-      return await fetchSiteInfo(sitename);
+    site: (parent: object, { sitename }: SiteParameters) => {
+      return fetchSiteInfo(sitename);
     },
     unserialize: async (
       _: any,
@@ -192,6 +192,4 @@ const resolvers = {
   EntityConfiguration: {},
 };
 
-export default {
-  resolvers,
-};
+export default resolvers;

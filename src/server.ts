@@ -1,15 +1,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const express = require('express');
+import express from 'express';
 const _ = require('lodash');
 
 const { graphqlHTTP } = require('express-graphql');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const cors = require('cors');
 const fs = require('fs');
-const { resolvers } = require('./resolvers');
-const getConnection = require('./database');
+import resolvers from './resolvers';
+import { getConnection } from './database';
 
 const Query = fs.readFileSync('./schema/schema.gql', 'utf8');
 import {
@@ -36,7 +36,7 @@ var schema = makeExecutableSchema({
   resolvers: combinedResolvers,
 });
 
-const app = express();
+const app: any = express();
 
 export interface ResolverContext {
   connectionManager: typeof getConnection;
@@ -54,4 +54,4 @@ app.use(
   }),
 );
 
-module.exports = { app };
+export default app;
