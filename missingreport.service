@@ -3,7 +3,7 @@ Description=GraphQL Server
 
 [Service]
 WorkingDirectory=/home/grumm/graphql-server-express
-ExecStart=/home/grumm/.nvm/versions/node/v16.6.2/bin/node /home/grumm/graphql-server-express/index.js
+ExecStart=/home/grumm/.nvm/versions/node/v16.6.2/bin/node /home/grumm/graphql-server-express/dist/index.js
 Restart=Always
 RestartSec=10
 StandardOutput=syslog

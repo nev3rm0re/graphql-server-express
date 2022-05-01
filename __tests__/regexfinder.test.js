@@ -1,4 +1,4 @@
-const regexfinder = require('../resolvers/regexfinder');
+import regexfinder from '../src/resolvers/regexfinder';
 
 describe('Regexp Finder', () => {
   // test stuff

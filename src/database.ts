@@ -1,7 +1,13 @@
-const mysql = require('mysql2/promise');
-const pools = {};
+import mysql from 'mysql2/promise';
 
-const getConnection = async (databaseName = process.env.DEBUG_TARGET_NAME) => {
+const pools: { [dbName: string]: mysql.Pool } = {};
+
+/**
+ * Returns MySQL Connection pool configured for `databaseName`
+ */
+export const getConnection = async (
+  databaseName: string = process.env.DEBUG_TARGET_NAME || '',
+): Promise<mysql.Pool> => {
   if (!pools[databaseName]) {
     pools[databaseName] = mysql.createPool({
       host: 'localhost',
@@ -16,5 +22,3 @@ const getConnection = async (databaseName = process.env.DEBUG_TARGET_NAME) => {
   }
   return await pools[databaseName];
 };
-
-module.exports = getConnection;
