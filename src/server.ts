@@ -9,7 +9,7 @@ const { makeExecutableSchema } = require('@graphql-tools/schema');
 const cors = require('cors');
 const fs = require('fs');
 import resolvers from './resolvers';
-import { getConnection } from './database';
+import { getConnection, getDatabases } from './database';
 
 const Query = fs.readFileSync('./schema/schema.gql', 'utf8');
 import {
@@ -50,6 +50,7 @@ app.use(
     graphiql: true,
     context: {
       connectionManager: getConnection,
+      getDatabases,
     },
   }),
 );
