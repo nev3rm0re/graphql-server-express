@@ -10,3 +10,5 @@ It's been written in TypeScript, and needs to be compiled to run.
 $ npm run build
 $ npm run start
 ```
+
+## Running as a `systemd` service

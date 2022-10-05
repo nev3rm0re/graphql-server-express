@@ -24,15 +24,21 @@ import {
   resolvers as missingsResolvers,
 } from './resolvers/missing';
 
+import {
+  typeDefs as xenforo,
+  resolvers as xenforoResolvers,
+} from './resolvers/xenforo';
+
 const combinedResolvers = _.merge(
   resolvers,
   sitesResolvers,
   dbresolvers,
   missingsResolvers,
+  xenforoResolvers,
 );
 
 var schema = makeExecutableSchema({
-  typeDefs: [Query, sites, dbserver, missings],
+  typeDefs: [Query, sites, dbserver, missings, xenforo],
   resolvers: combinedResolvers,
 });
 
